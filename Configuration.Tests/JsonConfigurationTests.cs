@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Text;
@@ -43,6 +44,22 @@ namespace Configuration.Tests {
             File.WriteAllText(testFile, content, Encoding.UTF8);
             JsonConfiguration configuration = new JsonConfiguration(TestContext.TestRunResultsDirectory, "test.config");
             configuration.Load();
+        }
+
+        [TestMethod]
+        //[ExpectedException(typeof(FileLoadException), "Loading failed because file is empty or does not exists.")]
+        public void LoadFileWithList() {
+            string testFile = Path.Combine(TestContext.TestRunResultsDirectory, "test.config");
+            JsonConfiguration configuration = new JsonConfiguration(TestContext.TestRunResultsDirectory, "test.config");
+            List<string> names = new List<string>();
+            names.Add("Michael Müller");
+            names.Add("Christine Haller");
+            names.Add("Marvin Ester");
+            configuration.SetValue("testSection", "list", names);
+            configuration.Save();
+            configuration.Load();
+            names.Clear();
+            names = (List<string>)configuration.GetValue("testSection", "list");
         }
     }
 }
