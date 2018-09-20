@@ -58,8 +58,10 @@ namespace Configuration {
                     }
                 }
             }
-
-            List<Section> sections = JsonConvert.DeserializeObject<List<Section>>(encrypted);
+            JsonSerializerSettings settings = new JsonSerializerSettings {
+                TypeNameHandling = TypeNameHandling.All
+            };
+            List<Section> sections = JsonConvert.DeserializeObject<List<Section>>(encrypted, settings);
             if (sections != null) {
                 Sections.Clear();
                 Sections.AddRange(sections);
