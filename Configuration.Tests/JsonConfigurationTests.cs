@@ -37,7 +37,6 @@ namespace Configuration.Tests {
         }
 
         [TestMethod]
-        //[ExpectedException(typeof(FileLoadException), "Loading failed because file is empty or does not exists.")]
         public void LoadIfFileIsEmptyNothingHappens() {
             string content = null;
             string testFile = Path.Combine(TestContext.TestRunResultsDirectory, "test.config");
@@ -47,7 +46,6 @@ namespace Configuration.Tests {
         }
 
         [TestMethod]
-        //[ExpectedException(typeof(FileLoadException), "Loading failed because file is empty or does not exists.")]
         public void LoadFileWithList() {
             string testFile = Path.Combine(TestContext.TestRunResultsDirectory, "test.config");
             JsonConfiguration configuration = new JsonConfiguration(TestContext.TestRunResultsDirectory, "test.config");

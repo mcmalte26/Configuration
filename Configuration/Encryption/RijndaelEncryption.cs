@@ -6,20 +6,15 @@ using System.Security.Cryptography;
 using System.Text;
 
 namespace Configuration {
-    public class RijndaelEncryption {
-        public byte[] Key { get; }
-        public byte[] IV { get; }
-        public int KeySize { get; }
-        public RijndaelEncryption(int keysize, byte[] key, byte[] iv) {
-            KeySize = keysize;
-            Key = key;
-            IV = iv;
-        }
 
-        public RijndaelEncryption() {
-            KeySize = 128;
-            Key = ComputerInfo.GetIndividualKey();
-            IV = ComputerInfo.GetIndividualIV();
+    public abstract class RijndaelEncryptionBase {
+        
+        protected abstract byte[] Key { get; }
+        protected abstract byte[] IV { get; }
+        protected virtual int KeySize { get; }
+
+        protected RijndaelEncryptionBase() {
+            KeySize = 256;
         }
 
         public byte[] EncryptStringToBytes(string decryptedText) {
@@ -32,6 +27,7 @@ namespace Configuration {
             byte[] encryptedText;
             using (Rijndael rijAlg = RijndaelManaged.Create()) {
                 rijAlg.KeySize = KeySize;
+                rijAlg.BlockSize = KeySize;
                 rijAlg.Key = Key;
                 rijAlg.IV = IV;
                 ICryptoTransform encryptor = rijAlg.CreateEncryptor(rijAlg.Key, rijAlg.IV);
@@ -57,6 +53,7 @@ namespace Configuration {
             string decryptedText = null;
             using (RijndaelManaged rijAlg = new RijndaelManaged()) {
                 rijAlg.KeySize = KeySize;
+                rijAlg.BlockSize = KeySize;
                 rijAlg.Key = Key;
                 rijAlg.IV = IV;
                 ICryptoTransform decryptor = rijAlg.CreateDecryptor(rijAlg.Key, rijAlg.IV);
@@ -71,5 +68,30 @@ namespace Configuration {
             }
             return decryptedText;
         }
+    }
+
+    public class RijndaelEncryptionWithComputerInfo: RijndaelEncryptionBase {
+
+        protected override byte[] Key { get; }
+        protected override byte[] IV { get; }
+
+
+        public RijndaelEncryptionWithComputerInfo() {
+            Key = ComputerInfo.GetIndividualKey();
+            IV = ComputerInfo.GetIndividualIV();
+        }
+      
+    }
+
+    public class RijndaelEncryptionWithPassphrase : RijndaelEncryptionBase {
+        private const string IV_String = "Frünz jügt üm kümplütt vürwührlüsten Tüxü qür düch Büyürn.";
+
+        public RijndaelEncryptionWithPassphrase(string passphrase) {
+            Key = new SHA256CryptoServiceProvider().ComputeHash(new UTF32Encoding().GetBytes(passphrase));
+        }
+
+        protected override byte[] Key { get; }
+
+        protected override byte[] IV => new SHA256CryptoServiceProvider().ComputeHash(new UTF32Encoding().GetBytes(IV_String));
     }
 }

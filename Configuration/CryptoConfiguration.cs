@@ -11,53 +11,30 @@ namespace Configuration {
         public CryptoConfiguration(string fullpath) {
             FullPath = fullpath;
         }
-
-        public CryptoConfiguration(string path, string fileName) {
-            FullPath = Path.Combine(path, fileName);
-        }
-
         public string FullPath { get; }
 
-        public void Save() {
+        public void Save(string passphrase = null) {
             string jsonString = JsonConvert.SerializeObject(Sections);
             byte[] encrypted;
-            using (RijndaelManaged rijndael = new RijndaelManaged()) {
-                rijndael.KeySize = 256;
-                rijndael.BlockSize = 256;
-                rijndael.Key = ComputerInfo.GetIndividualKey();
-                rijndael.IV = ComputerInfo.GetIndividualIV();
-                ICryptoTransform encryptor = rijndael.CreateEncryptor(rijndael.Key, rijndael.IV);
-                using (MemoryStream memoryStream = new MemoryStream()) {
-                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write)) {
-                        using (StreamWriter streamWriter = new StreamWriter(cryptoStream)) {
-                            streamWriter.Write(jsonString);
-                        }
-                        encrypted = memoryStream.ToArray();
-                    }
-                }
-            }
+            RijndaelEncryptionBase encryption = CreateRijndaelAlgorithm(passphrase);
+            encrypted = encryption.EncryptStringToBytes(jsonString);
+
             File.WriteAllBytes(FullPath, encrypted);
         }
 
-        public void Load() {
+        private static RijndaelEncryptionBase CreateRijndaelAlgorithm(string passphrase) {
+            return passphrase == null ? (RijndaelEncryptionBase)new RijndaelEncryptionWithComputerInfo() : new RijndaelEncryptionWithPassphrase(passphrase);
+        }
+
+        public void Load(string passphrase = null) {
             if (!File.Exists(FullPath)) {
                 File.Create(FullPath);
             }
             string encrypted = string.Empty;
-            using (RijndaelManaged rijndael = new RijndaelManaged()) {
-                rijndael.KeySize = 256;
-                rijndael.BlockSize = 256;
-                rijndael.Key = ComputerInfo.GetIndividualKey();
-                rijndael.IV = ComputerInfo.GetIndividualIV();
-                ICryptoTransform decryptor = rijndael.CreateDecryptor(rijndael.Key, rijndael.IV);
-                using (Stream memoryStream = File.OpenRead(FullPath)) {
-                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read)) {
-                        using (StreamReader streamReader = new StreamReader(cryptoStream)) {
-                            encrypted = streamReader.ReadToEnd();
-                        }
-                    }
-                }
-            }
+
+            RijndaelEncryptionBase encryption = CreateRijndaelAlgorithm(passphrase);
+            encrypted = encryption.DecryptStringFromBytes(File.ReadAllBytes(FullPath));
+            
             JsonSerializerSettings settings = new JsonSerializerSettings {
                 TypeNameHandling = TypeNameHandling.All
             };

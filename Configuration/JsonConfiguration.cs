@@ -13,7 +13,6 @@ namespace Configuration {
     public JsonConfiguration(string path, string fileName) {
       FullPath = Path.Combine(path, fileName);
     }
-
     public string FullPath { get; }
 
     public void Save() {
@@ -23,7 +22,6 @@ namespace Configuration {
       string json = JsonConvert.SerializeObject(Sections, Formatting.Indented, settings);
       File.WriteAllText(FullPath, json, Encoding.UTF8);
     }
-
     public void Load() {
       if (!File.Exists(FullPath)) {
         File.Create(FullPath);
@@ -39,7 +37,6 @@ namespace Configuration {
       }
       else {
         Sections.Clear();
-        //throw new FileLoadException("Loading failed because file is empty or does not exists.");
       }
     }
 
